@@ -95,7 +95,7 @@
     </dependencies>
 
     <build>
-        <finalName>WestCore</finalName>
+        <finalName>WestCore-${project.version}</finalName>
         <resources>
             <resource>
                 <directory>src/main/resources</directory>
