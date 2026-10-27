@@ -1,0 +1,16 @@
+name: WestCore
+version: '${project.version}'
+main: com.westcube.westcore.WestCore
+api-version: '1.21'
+author: Diably12
+description: Plugin maison WestCube (API site, AFK, dragon, keepinv, lastpos, commandes staff, tab, motd, cadres, stats)
+
+softdepend: [PlaceholderAPI, Vault, VotingPlugin, Multiverse-Core, LuckPerms, ViaVersion]
+
+# Toutes les autres commandes sont des sous-commandes de /westcore.
+# Les raccourcis (/afk, /keepinv...) se déclarent dans config.yml -> core.aliases.
+# Les permissions sont déclarées par chaque module (config.yml -> <module>.permissions).
+commands:
+  westcore:
+    description: Commandes WestCore
+    aliases: [wc]

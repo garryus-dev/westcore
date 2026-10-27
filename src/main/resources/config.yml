@@ -1,0 +1,408 @@
+# ============================================================
+#  WestCore - plugin maison WestCube
+#  Messages au format MiniMessage : https://docs.advntr.dev/minimessage/format
+#  Les valeurs des placeholders gardent les codes "&" (lus par TAB / DeluxeMenus).
+#  /westcore reload : recharge la config et redémarre les modules.
+#
+#  PERMISSIONS : chaque module a une section "permissions" (clé interne : nom de la permission).
+#  Le nom peut être changé librement, appliqué au reload / redémarrage.
+#  ⚠ Les droits déjà donnés dans LuckPerms ne suivent pas un renommage :
+#    mettre à jour les groupes en même temps (lp search <ancien.nom>).
+#  /westcore perms affiche les permissions et raccourcis effectifs.
+# ============================================================
+
+messages:
+  no-permission: "<red>Vous n'avez pas la permission."
+  players-only: "<red>Cette commande est réservée aux joueurs."
+  module-disabled: "<red>Cette fonctionnalité est désactivée."
+  unknown-player: "<red>Ce joueur ne s'est jamais connecté."
+
+
+# ------------------------------------------------------------
+# Commandes
+# Toutes les commandes sont des sous-commandes de /westcore (alias /wc) :
+#   /wc afk, /wc keepinv, /wc mob, /wc stats...   (/wc seul : liste des commandes disponibles)
+# Les raccourcis créent des commandes directes :  nom: "sous-commande [arguments fixes]"
+#   ex.  afk: "afk"   ->  /afk = /wc afk
+#        export7: "stats export 7d"   ->  /export7 = /wc stats export 7d
+# Pour supprimer un raccourci : retirer la ligne (ou mettre une valeur vide).
+# Si le nom est déjà pris par un autre plugin, le raccourci reste disponible en /westcore:<nom>.
+# ------------------------------------------------------------
+core:
+  permissions:
+    admin: westcore.admin
+  aliases:
+    afk: "afk"
+    keepinv: "keepinv"
+    tplastpos: "tplastpos"
+    endstatus: "endstatus"
+    dragonkills: "dragonkills"
+    dragonkillsset: "dragonkillsset"
+    endreset: "endreset"
+    mob: "mob"
+    tuer: "tuer"
+    entites: "entites"
+    entities: "entites"
+    claims: "claims"
+    westcmd: "westcmd"
+    sb: "sb"
+
+
+# ------------------------------------------------------------
+# API HTTP pour le site (ex-WestAPI)
+# ------------------------------------------------------------
+api:
+  enabled: true
+  # Adresse d'écoute. 0.0.0.0 = toutes les interfaces.
+  # Si le site est sur la même machine, mettre 127.0.0.1.
+  bind: "0.0.0.0"
+  port: 41240
+  # Remplacée automatiquement par celle de plugins/WestAPI/config.yml au premier démarrage.
+  api-key: "changez-moi"
+  # Rafraîchissement des données exposées (secondes, calculées sur le thread principal)
+  refresh-seconds: 60
+  # Durée de conservation des valeurs d'un joueur (secondes, calculées à la demande)
+  player-cache-seconds: 30
+  routes:
+    top-voters: true
+    # /api/codes, /api/codes/valeurs, /api/joueur/<pseudo>/codes
+    # Les codes courts du site se déclarent dans plugins/WestCore/codes-courts.yml
+    codes: true
+
+
+# ------------------------------------------------------------
+# AFK (ex-westafk_v2.3.sk)
+# ------------------------------------------------------------
+afk:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestAFK »</b></gradient> "
+  permissions:
+    use: westcube.afk
+    # Jamais AFK automatiquement ni expulsé
+    bypass: westcube.afk.bypass
+    # Expulsion après kick-time-extended au lieu de kick-time
+    longkick: westcube.afk.longkick
+  # Secondes sans mouvement réel avant le passage AFK
+  idle-time: 300
+  # Secondes d'inactivité avant kick (westcube.afk.longkick : kick-time-extended)
+  kick-time: 1800
+  kick-time-extended: 3600
+  # Fréquence de vérification (ticks, 30 = 1,5 s)
+  check-ticks: 30
+  # Avertissement dans l'actionbar quand le kick approche (secondes)
+  kick-warning: 60
+  # Distance (blocs) depuis le point d'ancrage pour compter comme un mouvement réel
+  move-distance: 1.0
+  # Points requis pour sortir de l'AFK, et fenêtre de temps (secondes)
+  wakeup-threshold: 5
+  wakeup-timeout: 5
+  # Points par type d'action (0 = désactivé)
+  points:
+    chat: 5
+    command: 3
+    interact: 0
+    movement: 2
+  afk-command-cooldown: 10
+  # Ne pas annoncer l'AFK des joueurs en vanish (métadonnée "vanished")
+  hide-vanished: true
+  messages:
+    now-afk: "<white>{player}</white> <gray>est maintenant AFK."
+    back: "<white>{player}</white> <gray>est de retour. (<#ffd027>{time}</#ffd027>)"
+    actionbar: "<#e87e28>⏳</#e87e28> <gray>Vous êtes AFK depuis <#ffd027>{time}"
+    kick-warning: "<red>⚠</red> <gray>Expulsion pour AFK dans <red>{time}</red> — bougez !"
+    kick: "<red>Vous êtes resté AFK trop longtemps.<newline><gray>Durée d'inactivité : <red>{time}</red>."
+    cooldown: "<red>Veuillez patienter encore <white>{seconds}sec</white> avant de refaire /afk."
+  placeholder:
+    afk: "&7AFK"
+    not-afk: ""
+
+
+# ------------------------------------------------------------
+# Dragon de l'End (ex-dragon_system_v2.1.sk)
+# ------------------------------------------------------------
+dragon:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestEnd »</b></gradient> "
+  permissions:
+    status: westcube.endstatus
+    # dragonkills, dragonkillsset, endreset
+    admin: westcube.endadmin
+    # Entrer dans le monde du dragon même verrouillé (personne par défaut, ops compris)
+    bypass: westcube.end.bypass
+  world: ressource_the_end_dragon
+  hub: hub
+  # Commande de retour au hub ({player} = pseudo). Vide = spawn du monde "hub".
+  hub-command: "mvtp {player} {hub}"
+  # Commande de régénération ({world} = monde du dragon)
+  regen-command: "mv regen {world}"
+  cooldown-minutes: 60
+  delay-rewards-seconds: 5
+  teleport-countdown-seconds: 60
+  delay-preregen-seconds: 5
+  delay-postregen-seconds: 10
+  reward-money: 1000
+  # Points d'expérience (équivalent de "xp add <joueur> 1000")
+  reward-xp: 1000
+  # Dégâts minimum infligés au dragon pour être récompensé (le dragon a 200 PV)
+  min-damage: 10
+  messages:
+    defeated: "<gray>Le dragon a été vaincu !"
+    preparing: "<gray>Préparation des récompenses..."
+    countdown: "<gray>Téléportation dans <#ffd027>{time}</#ffd027>..."
+    teleporting: "<gray>Téléportation vers le hub !"
+    regen: "<gray>Régénération du monde en cours... <dark_gray>(Le monde est temporairement inaccessible)"
+    cooldown: "<gray>Cooldown en cours, le monde sera disponible dans <#ffd027>{minutes} minutes</#ffd027>..."
+    unlocked: "<green>Le monde de l'End est de nouveau disponible !"
+    reward: "<gray><green>+{xp}XP</green> & <green>+{money}$</green> pour avoir combattu le dragon !"
+    not-enough-damage: "<gray>Vous n'avez pas infligé assez de dégâts au dragon pour être récompensé."
+    access-denied: "<gray><red>Accès impossible :</red> {reason}."
+    reason-cooldown: "réouverture dans <#ffd027>{minutes}</#ffd027> minute(s)"
+    reason-regen: "régénération en cours"
+    status-locked: "<gray>Le monde est actuellement <red>verrouillé</red> : {reason}."
+    status-open: "<gray>Le monde est <green>disponible</green>."
+    kills: "<gray><white>{player}</white> a combattu le dragon avec succès <#ffd027>{kills}</#ffd027> fois."
+    kills-set: "<gray>Statistique mise à jour : <white>{player}</white> -> <#ffd027>{kills}</#ffd027>"
+    reset: "<gray>Variables réinitialisées."
+  placeholder:
+    available: "&aDisponible"
+    unavailable: "&cIndisponible"
+    cooldown: "&7(retour dans {minutes} minute(s))"
+
+
+# ------------------------------------------------------------
+# KeepInventory (ex-keepinv_v1.1.sk + BetterKeepInventory)
+# Garde l'inventaire si le joueur a activé /keepinv,
+# ou s'il a la permission westcube.keepinv.always.
+# ------------------------------------------------------------
+keepinv:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestInv »</b></gradient> "
+  permissions:
+    toggle: westcube.keepinv.toggle
+    # /keepinv <joueur>
+    admin-toggle: westcube.keepinv.admin.toggle
+    # Inventaire toujours gardé, sans commande (personne par défaut, ops compris)
+    always: westcube.keepinv.always
+  keep-items: true
+  keep-exp: true
+  toggle-cooldown: 3
+  messages:
+    enabled: "<green>KeepInventory activé."
+    disabled: "<red>KeepInventory désactivé."
+    admin-enabled: "<green>KeepInventory activé pour <white>{player}</white>."
+    admin-disabled: "<red>KeepInventory désactivé pour <white>{player}</white>."
+    player-enabled-admin: "<green>Un administrateur a activé votre KeepInventory."
+    player-disabled-admin: "<red>Un administrateur a désactivé votre KeepInventory."
+    revoked: "<gray>Votre KeepInventory a été désactivé car vous n'avez plus accès à cette fonctionnalité."
+    cooldown: "<red>Veuillez patienter <white>{seconds}sec</white> avant de refaire /keepinv."
+    console-usage: "<red>Usage console : /keepinv <joueur>"
+  placeholder:
+    on: "&aActivé"
+    off: "&cDésactivé"
+
+
+# ------------------------------------------------------------
+# Dernière position par monde (ex-westcube_lastpos_v1.2.sk)
+# ------------------------------------------------------------
+lastpos:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestWorld »</b></gradient> "
+  permissions:
+    use: westcube.tplastpos
+  tp-delay: 5
+  tp-move-tolerance: 0.3
+  save-distance: 0.5
+  # Fréquence d'échantillonnage des positions (ticks)
+  sample-ticks: 40
+  messages:
+    none: "<gray>Aucune position enregistrée."
+    none-other: "<gray>Aucune position enregistrée pour <white>{player}</white> dans <#ffd027>{world}</#ffd027>."
+    world-not-loaded: "<red>Le monde <#ffd027>{world}</#ffd027> n'est pas chargé."
+    countdown: "<gray>Téléportation dans <#ffd027>{seconds} secondes</#ffd027>, veuillez ne pas bouger."
+    done: "<gray>Vous avez été téléporté à votre dernière position."
+    done-other: "<gray><white>{player}</white> a été téléporté à sa dernière position dans <#ffd027>{world}</#ffd027>."
+    cancelled: "<red>Téléportation annulée car {reason}."
+    reason-moved: "vous avez bougé"
+    reason-damage: "vous avez subi des dégâts"
+    reason-interact: "vous avez interagi"
+    reason-break: "vous avez cassé un bloc"
+    reason-place: "vous avez posé un bloc"
+    usage: "<red>Usage : /tplastpos <joueur> <monde>"
+
+
+# ------------------------------------------------------------
+# Commandes staff (ex-westcmd_v2.sk)
+# ------------------------------------------------------------
+staffcmd:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestCmd »</b></gradient> "
+  permissions:
+    spawnmob: westcube.spawnmob
+    spawnmob-boss: westcube.spawnmob.boss
+    killmob: westcube.killmob
+    entities: westcube.entities
+    claims: westcube.claims
+  max-spawn: 1024
+  max-radius: 100
+  entities-top: 10
+
+
+# ------------------------------------------------------------
+# Cadres invisibles (ex-InvisibleFrames)
+# Accroupi + clic droit sur un cadre avec la permission "toggle".
+# ------------------------------------------------------------
+frames:
+  enabled: true
+  permissions:
+    toggle: invisibleframes.toggleframes
+  # Verrouille le cadre tant qu'il est invisible (pas de physique, pas d'oubli)
+  lock-frame: true
+  # Autoriser à rendre invisible un cadre vide
+  toggle-empty: false
+  # Matériaux interdits (ex : iron_nugget)
+  blacklisted-items: []
+
+
+# ------------------------------------------------------------
+# MOTD de la liste des serveurs (ex-MiniMOTD)
+# Un MOTD est tiré au hasard dans la liste à chaque ping.
+# ------------------------------------------------------------
+motd:
+  enabled: true
+  motds:
+    - line1: "            <bold><gradient:#ffd521:#e87e28>WestCube ♞</gradient></bold><white>「Survie 1.21.11+」"
+      line2: "      <gradient:#f49d42:#d43131>≣ Venez conquérir les terres de l'Ouest ! ≣</gradient>"
+  # PNG 64x64 dans plugins/WestCore/ (vide = icône du serveur)
+  icon: server-icon.png
+  # Places affichées (0 = valeur de server.properties)
+  max-players: 200
+
+
+# ------------------------------------------------------------
+# Tablist, scoreboard et préfixes (ex-TAB)
+# Codes & / &#rrggbb et MiniMessage acceptés.
+# Placeholders internes : %player% %ping% %online% %staffonline%, puis PlaceholderAPI.
+# ------------------------------------------------------------
+tab:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestCube »</b></gradient> "
+  refresh-ticks: 20
+  permissions:
+    # /sb
+    scoreboard: tab.scoreboard.toggle
+    # Joueurs comptés dans %staffonline%
+    staff: tab.staff
+  header-footer:
+    enabled: true
+    header:
+      - "<#63a1ff>&m                                                </#6385ff>"
+      - "<gradient:#ffd521:#e87e28>&lWestCube ♞</gradient>"
+      - ""
+      - "&r&#ffd027Joueurs connectés : &f%online%"
+      - "&#ffd027Staff connectés : &f%staffonline%"
+      - ""
+    footer:
+      - ""
+      - "&#ffd027Ping : &f%ping%"
+      - ""
+      - "&r&7play.westcube.fr"
+      - "<#63a1ff>&m                                                </#6385ff>"
+  nametags:
+    enabled: true
+    prefix: "%luckperms_prefix%"
+    suffix: "%luckperms_suffix%"
+    collision: true
+    # Grade servant au tri de la tablist, du plus haut au plus bas
+    group-placeholder: "%luckperms_primary_group_name%"
+    sorting: [dev, owner, admin, mod, builder, helper, mythe, legende, baron, sherif, rancher, cowboy, ouvrier, novice, default]
+    refresh-ticks: 100
+  scoreboard:
+    enabled: true
+    remember-toggle: true
+    hide-numbers: true
+    title: "<gradient:#ffd521:#e87e28>&lWestCube ♞</gradient>"
+    lines:
+      - "<#63a1ff>&m                            </#6385ff>"
+      - " &#e87e28&lProfil :"
+      - " &#ffd027Rang&f : %luckperms_prefix_element_highest_on_track_farwest%"
+      - " &#ffd027Monde &f: %multiverse-core_alias%"
+      - " &#ffd027Argent&f : %xconomy_balance%"
+      - " &#ffd027Chunks&f : %scs_chunks_count%/%scs_max-chunks%"
+      - ""
+      - " &#e87e28&lServeur :"
+      - " &#ffd027Joueurs &f: %online%"
+      - " &#ffd027Votes disponibles : &f%votingplugin_canvotesites%"
+      - " &#ffd027VoteParty : &f%VotingPlugin_VotePartyVotesCurrent%&7/%VotingPlugin_VotePartyVotesRequired%"
+      - " &#ffd027IP &f: play.westcube.fr"
+      - "<#63a1ff>&m                            </#6385ff>"
+      - "&7         /sb"
+  messages:
+    scoreboard-on: "<gray>Scoreboard <dark_green>activé"
+    scoreboard-off: "<gray>Scoreboard <red>désactivé"
+
+
+# ------------------------------------------------------------
+# Statistiques de fréquentation (admins) : /wc stats, /wc stats export
+# Données : plugins/WestCore/data/stats.db (SQLite). Aucune IP n'est stockée.
+# ------------------------------------------------------------
+stats:
+  enabled: true
+  prefix: "<gradient:#ffd521:#e87e28><b>WestStats »</b></gradient> "
+  permissions:
+    view: westcore.stats.view
+    export: westcore.stats.export
+    # Exclu de toute collecte (personne par défaut, ops compris)
+    exempt: westcore.stats.exempt
+  # Identifiant de ce serveur dans la base (utile si plusieurs serveurs partagent un jour une base MySQL)
+  server-id: "westcube"
+  # Fuseau des calculs par jour / heure et de l'export
+  timezone: "Europe/Paris"
+  # Fréquence des relevés de performance (minutes)
+  snapshot-interval-minutes: 5
+  # Heure du calcul quotidien (HH:mm, dans le fuseau ci-dessus)
+  aggregation-time: "04:00"
+  # Conservation des relevés bruts (jours, minimum 8). Sessions et agrégats journaliers sont gardés.
+  raw-retention-days: 90
+  afk:
+    # Le temps AFK reprend la détection du module afk (afk.idle-time).
+    # true : les afk.idle-time secondes d'inactivité avant le passage AFK comptent aussi comme AFK.
+    count-idle-time: true
+  # One-shot : première session plus courte que ce seuil (minutes) et aucun retour dans les 7 jours
+  one-shot-minutes: 10
+  # Durée de mise en cache des calculs affichés dans le menu (secondes)
+  cache-seconds: 60
+  # Couleurs : vert si "good" atteint, orange si "warn" atteint, rouge sinon
+  thresholds:
+    tps:
+      good: 19.5
+      warn: 17.0
+    # MSPT : plus bas = mieux (50 ms = limite des 20 TPS)
+    mspt:
+      good: 40
+      warn: 50
+    # Taux de rétention, en décimal (0.40 = 40 %)
+    retention:
+      d1:
+        good: 0.40
+        warn: 0.25
+      d7:
+        good: 0.20
+        warn: 0.10
+      d30:
+        good: 0.10
+        warn: 0.05
+  export:
+    # Pseudos remplacés par "Joueur #0042", colonne UUID retirée
+    anonymize: false
+    # Suppression automatique des exports plus anciens (jours)
+    keep-days: 7
+    cooldown-seconds: 60
+  messages:
+    loading: "<gray>Calcul des statistiques..."
+    error: "<red>Impossible de calculer les statistiques, voir la console."
+    export-usage: "<red>Usage : /wc stats export [7d|30d|90d|all]"
+    export-started: "<gray>Export des statistiques ({period}) lancé..."
+    export-done: "<green>Export terminé : <white>{file}</white> <gray>({size} Ko, {seconds} s) dans plugins/WestCore/exports/"
+    export-failed: "<red>L'export a échoué, voir la console."
+    export-running: "<red>Un export est déjà en cours."
+    export-cooldown: "<red>Patientez encore <white>{seconds} s</white> avant un nouvel export."

@@ -1,0 +1,177 @@
+# ============================================================
+#  Codes courts du site (plugin WordPress WestAPI)
+#
+#  Chaque entrée de "codes" devient un code court sur WordPress :
+#    [wc_<id>]                      (préfixe réglable dans WordPress)
+#    [westapi code="<id>"]          (forme générique, toujours disponible)
+#  Ce fichier est aussi la LISTE BLANCHE : le site ne peut lire aucun autre placeholder.
+#
+#  Après modification : /westcore reload, puis "Synchroniser" dans WordPress
+#  (sinon le site se synchronise tout seul dans l'heure).
+#
+#  Options d'une entrée :
+#    placeholder : texte PlaceholderAPI (plusieurs placeholders et du texte autorisés)
+#    portee      : global (calculé en boucle, identique pour tous)
+#                  joueur (calculé pour un pseudo : [wc_<id> joueur="Pseudo"])
+#    public      : (portee joueur) true = affichable pour n'importe quel pseudo
+#                  false = réservé au futur tableau de bord du joueur connecté
+#    format      : texte  (couleurs retirées, par défaut)
+#                  html   (couleurs & / &#rrggbb / MiniMessage converties pour le site)
+#                  nombre (texte formaté en nombre par WordPress : 12345 -> 12 345)
+#                  brut   (valeur telle quelle, codes couleur compris)
+#    label / description : affichés dans l'admin WordPress
+#    params      : remplacent {nom} dans le placeholder, attribut du code court
+#                  [wc_<id> nom="valeur"]. Valeurs acceptées :
+#                    "1-10"                    plage de nombres
+#                    [a, b, c]                 liste
+#                    { mois: Month, ... }      table : valeur site -> valeur placeholder
+#                  500 combinaisons maximum par code (toutes calculées à chaque rafraîchissement).
+#                  Noms réservés : code, joueur, defaut, decimales.
+#  Identifiants et noms de paramètres : a-z, 0-9 et _ uniquement.
+# ============================================================
+
+codes:
+
+  # ---------------------------------------------------------- Votes (global)
+  voteparty_actuel:
+    placeholder: "%VotingPlugin_VotePartyVotesCurrent%"
+    format: nombre
+    label: "VoteParty : votes actuels"
+  voteparty_requis:
+    placeholder: "%VotingPlugin_VotePartyVotesRequired%"
+    format: nombre
+    label: "VoteParty : votes requis"
+  voteparty_restant:
+    placeholder: "%VotingPlugin_VotePartyVotesNeeded%"
+    format: nombre
+    label: "VoteParty : votes restants"
+  votes_serveur:
+    placeholder: "%VotingPlugin_Global{periode}Total%"
+    format: nombre
+    label: "Votes du serveur"
+    description: "Total des votes de tous les joueurs sur la période"
+    params:
+      periode: { jour: Daily, semaine: Weekly, mois: Month, total: AllTime }
+  top_vote_nom:
+    placeholder: "%VotingPlugin_Top_{periode}_{rang}%"
+    label: "Classement votes : pseudo"
+    params:
+      periode: { mois: Month, semaine: Week, jour: Daily, total: All }
+      rang: "1-10"
+  top_vote_votes:
+    placeholder: "%VotingPlugin_Top_{periode}Votes_{rang}%"
+    format: nombre
+    label: "Classement votes : nombre de votes"
+    params:
+      periode: { mois: Month, semaine: Week, jour: Daily, total: All }
+      rang: "1-10"
+
+  # ----------------------------------------------------------- Jobs (global)
+  jobs_top_nom:
+    placeholder: "%jobsr_jtop_displayname_{metier}_{rang}%"
+    label: "Classement métier : pseudo"
+    params:
+      metier: [total, miner, woodcutter, farmer, builder, crafter, blacksmith, culinarian, explorer, magician, ranger]
+      rang: "1-10"
+  jobs_top_niveau:
+    placeholder: "%jobsr_jtop_level_{metier}_{rang}%"
+    format: nombre
+    label: "Classement métier : niveau"
+    params:
+      metier: [total, miner, woodcutter, farmer, builder, crafter, blacksmith, culinarian, explorer, magician, ranger]
+      rang: "1-10"
+  jobs_nb_joueurs:
+    placeholder: "%jobsr_totalplayers_{metier}%"
+    format: nombre
+    label: "Nombre de joueurs dans un métier"
+    params:
+      metier: [miner, woodcutter, farmer, builder, fisherman, hunter]
+
+  # ------------------------------------------------------- Monde de l'End
+  end_statut:
+    placeholder: "%westcube_endstatus%"
+    format: html
+    label: "Statut du monde de l'End"
+  end_reouverture:
+    placeholder: "%westcube_endcooldown%"
+    format: html
+    label: "Réouverture du monde de l'End"
+
+  # --------------------------------------------------------------- Joueur
+  # Certains plugins ne répondent que pour un joueur connecté : la valeur est alors vide.
+  grade:
+    placeholder: "%luckperms_current_group_on_track_farwest%"
+    portee: joueur
+    label: "Rang du joueur"
+  votes_joueur:
+    placeholder: "%VotingPlugin_Total_{periode}%"
+    portee: joueur
+    format: nombre
+    label: "Votes du joueur"
+    params:
+      periode: { jour: Daily, semaine: Weekly, mois: Monthly, total: AllTime }
+  vote_position:
+    placeholder: "%VotingPlugin_Top_{periode}_Position%"
+    portee: joueur
+    label: "Position au classement des votes"
+    params:
+      periode: { mois: Month, semaine: Week, jour: Daily, total: All }
+  vote_serie:
+    placeholder: "%VotingPlugin_{periode}VoteStreak%"
+    portee: joueur
+    format: nombre
+    label: "Série de votes en cours"
+    params:
+      periode: { jour: Daily, semaine: Weekly, mois: Month }
+  vote_points:
+    placeholder: "%VotingPlugin_Points_Format%"
+    portee: joueur
+    label: "Points de vote"
+  vote_sites_dispo:
+    placeholder: "%votingplugin_canvotesites%"
+    portee: joueur
+    format: nombre
+    public: false
+    label: "Sites de vote disponibles"
+  jobs_niveau:
+    placeholder: "%jobsr_user_jlevel_{metier}%"
+    portee: joueur
+    format: nombre
+    label: "Niveau dans un métier"
+    params:
+      metier: [miner, woodcutter, farmer, builder, fisherman, hunter, crafter, blacksmith, culinarian, explorer, magician, ranger]
+  jobs_niveaux_total:
+    placeholder: "%jobsr_user_totallevels%"
+    portee: joueur
+    format: nombre
+    label: "Total des niveaux de métier"
+  jobs_liste:
+    placeholder: "%jobsr_user_jobs%"
+    portee: joueur
+    label: "Métiers du joueur"
+  dragons:
+    placeholder: "%westcube_dragonkills%"
+    portee: joueur
+    format: nombre
+    label: "Dragons combattus"
+  argent:
+    placeholder: "%xconomy_balance%"
+    portee: joueur
+    public: false
+    label: "Argent"
+  claims:
+    placeholder: "%scs_claims_count%/%scs_max-claims%"
+    portee: joueur
+    public: false
+    label: "Claims utilisés / maximum"
+  homes:
+    placeholder: "%sunlight_homes_amount%/%sunlight_homes_limit%"
+    portee: joueur
+    public: false
+    label: "Homes utilisés / maximum"
+  keepinv:
+    placeholder: "%westcube_keepinv%"
+    portee: joueur
+    format: html
+    public: false
+    label: "KeepInventory"
